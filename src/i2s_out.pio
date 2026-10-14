@@ -1,6 +1,7 @@
 ; I2S transmitter, 16-bit stereo, two PIO cycles per bit.
 ; Adapted from pico-extras audio_i2s.pio,
-; Copyright (c) 2020 Raspberry Pi (Trading) Ltd., BSD-3-Clause (see LICENSE).
+; Copyright (c) 2020 Raspberry Pi (Trading) Ltd., BSD-3-Clause
+; (see THIRD_PARTY_NOTICES).
 ;
 ; Side-set pin 0 is BCLK, side-set pin 1 is WSEL (LRCLK).
 ; Each 32-bit FIFO word is one frame: right sample in the upper half,
