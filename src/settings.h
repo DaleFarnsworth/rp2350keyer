@@ -14,6 +14,7 @@ typedef struct {
   uint16_t dit_duration_ms;
   uint8_t tx_note;
   uint16_t tx_freq_hz;    // 0 = use tx_note
+  uint8_t sidetone_volume;
 } vail_settings_t;
 
 // Returns false (and fills in defaults) if nothing valid is stored.

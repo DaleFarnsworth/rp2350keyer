@@ -17,12 +17,16 @@
 VailAdapter::VailAdapter() {
     this->txNote = DEFAULT_TONE_NOTE;
     this->ditDuration = DEFAULT_ADAPTER_DIT_DURATION_MS;
+    this->sidetoneVolume = DEFAULT_SIDETONE_VOLUME;
 }
 
-void VailAdapter::Begin(uint8_t keyerType, uint16_t ditDurationMs, uint8_t note, uint16_t freqHz) {
+void VailAdapter::Begin(uint8_t keyerType, uint16_t ditDurationMs, uint8_t note, uint16_t freqHz,
+                        uint8_t volume) {
     this->ditDuration = ditDurationMs;
     this->txNote = note;
     this->txFreqHz = freqHz;
+    this->sidetoneVolume = volume;
+    sidetone_set_volume(volume);
     this->keyer = GetKeyerByNumber(keyerType, this);
     if (this->keyer) {
         this->keyer->SetDitDuration(this->ditDuration);
@@ -65,6 +69,7 @@ void VailAdapter::settingsChanged(uint8_t keyerType) {
         .dit_duration_ms = (uint16_t) this->ditDuration,
         .tx_note = (uint8_t) this->txNote,
         .tx_freq_hz = (uint16_t) this->txFreqHz,
+        .sidetone_volume = (uint8_t) this->sidetoneVolume,
     };
     settings_save_later(&s);
 }
@@ -167,6 +172,19 @@ void VailAdapter::HandleMIDI(const MidiPacket &event) {
                 printf("TX frequency set to: %u Hz\n", this->txFreqHz);
             } else {
                 printf("TX frequency cleared, using note %u\n", this->txNote);
+            }
+            this->settingsChanged(getCurrentKeyerType());
+            break;
+        case 4:
+            // Not in the Vail adapter: sidetone volume. 127 is 0 dBFS,
+            // each step below is -0.5 dB, 0 is off.
+            this->sidetoneVolume = event.byte3;
+            sidetone_set_volume(event.byte3);
+            if (event.byte3) {
+                printf("Sidetone volume set to: %u (%.1f dBFS)\n", event.byte3,
+                       ((int) event.byte3 - 127) / 2.0);
+            } else {
+                printf("Sidetone volume set to: 0 (off)\n");
             }
             this->settingsChanged(getCurrentKeyerType());
             break;

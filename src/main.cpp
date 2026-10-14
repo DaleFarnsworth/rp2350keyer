@@ -91,10 +91,12 @@ int main() {
 
     vail_settings_t s;
     bool stored = settings_load(&s);
-    adapter.Begin(s.keyer_type, s.dit_duration_ms, s.tx_note, s.tx_freq_hz);
-    printf("Settings %s - keyer: %u, dit duration: %u ms, TX note: %u, TX freq: %u Hz\n",
+    adapter.Begin(s.keyer_type, s.dit_duration_ms, s.tx_note, s.tx_freq_hz,
+                  s.sidetone_volume);
+    printf("Settings %s - keyer: %u, dit duration: %u ms, TX note: %u, TX freq: %u Hz, "
+           "sidetone volume: %u\n",
            stored ? "loaded" : "defaulted", s.keyer_type, s.dit_duration_ms, s.tx_note,
-           s.tx_freq_hz);
+           s.tx_freq_hz, s.sidetone_volume);
 
     audio_init();
 

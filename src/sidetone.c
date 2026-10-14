@@ -15,19 +15,36 @@ static uint32_t tones[SIDETONE_SLOTS];
 // Shared with the I2S interrupt
 static volatile uint32_t phase_inc;   // 0 when silent
 static volatile bool gate;
+static volatile uint32_t amp_max;     // Q16 peak level
+static volatile uint32_t amp_step;    // Q16 change per sample
 
 // Interrupt-only state
 static uint32_t phase;
 static uint32_t cur_inc;
-static uint32_t amp;                  // Q16 envelope level, 0..SIDETONE_AMPLITUDE<<16
+static uint32_t amp;                  // Q16 envelope level, 0..amp_max
 
-#define AMP_MAX  ((uint32_t) SIDETONE_AMPLITUDE << 16)
-#define AMP_STEP (AMP_MAX / (AUDIO_SAMPLE_RATE / 1000 * SIDETONE_RAMP_MS))
+#define RAMP_SAMPLES (AUDIO_SAMPLE_RATE / 1000 * SIDETONE_RAMP_MS)
+// Rate for moving down to a lowered volume: full scale in one ramp time
+#define GLIDE_STEP   ((32767u << 16) / RAMP_SAMPLES)
 
 void sidetone_init(void) {
   for (uint32_t i = 0; i <= SINE_LEN; i++) {
     sine_table[i] = (int16_t) lrintf(32767.0f * sinf(2.0f * (float) M_PI * (float) i / SINE_LEN));
   }
+  sidetone_set_volume(DEFAULT_SIDETONE_VOLUME);
+}
+
+void sidetone_set_volume(uint8_t volume) {
+  if (volume > 127) volume = 127;
+  uint32_t max = 0;
+  if (volume > 0) {
+    float level = 32767.0f * powf(10.0f, ((float) volume - 127.0f) / 40.0f);
+    max = (uint32_t) lrintf(level) << 16;
+  }
+  // The ramp takes SIDETONE_RAMP_MS at any volume
+  uint32_t step = max / RAMP_SAMPLES;
+  amp_step = step ? step : 1;
+  amp_max = max;
 }
 
 static void update(void) {
@@ -62,14 +79,23 @@ int32_t sidetone_next_sample(void) {
   if (gate) {
     // Keep the old pitch through the release so the fade-out is clean,
     // but follow pitch changes while keyed.
+    // A volume change while keyed glides to the new level.
     cur_inc = phase_inc;
-    amp = (amp + AMP_STEP > AMP_MAX) ? AMP_MAX : amp + AMP_STEP;
-  } else {
-    if (amp == 0) {
-      phase = 0;
-      return 0;
+    uint32_t max = amp_max;
+    uint32_t step = amp_step;
+    if (amp < max) {
+      amp = (max - amp > step) ? amp + step : max;
+    } else if (amp > max) {
+      amp = (amp - max > GLIDE_STEP) ? amp - GLIDE_STEP : max;
     }
-    amp = (amp > AMP_STEP) ? amp - AMP_STEP : 0;
+  } else {
+    // Above the current volume (it was just lowered), use the faster rate
+    uint32_t step = (amp > amp_max) ? GLIDE_STEP : amp_step;
+    amp = (amp > step) ? amp - step : 0;
+  }
+  if (amp == 0) {
+    phase = 0;
+    return 0;
   }
 
   uint32_t idx = phase >> (32 - SINE_BITS);

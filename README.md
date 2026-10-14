@@ -63,6 +63,7 @@ Channel 1 only.
 | `B0 01 vv` | Dit duration = `vv` × 2 ms. Saved to flash. |
 | `B0 02 nn` | Sidetone note number (69 = A4 = 440 Hz). Saved to flash. |
 | `B0 03 vv` | Sidetone pitch = `vv` × 10 Hz (10–1270 Hz); `00` goes back to the CC2 note. Whichever of CC2 and CC3 came last sets the pitch. Saved to flash. Not part of the Vail protocol. |
+| `B0 04 vv` | Sidetone volume: 127 is 0 dBFS, each step below is -0.5 dB, 0 is off. Default 103 (-12 dBFS). Applies to keyed and MIDI-note sidetone. Saved to flash. Not part of the Vail protocol. |
 | `C0 kk` | Keyer: 0 passthrough, 1 straight key, 2 bug, 3 electric bug, 4 single dot, 5 ultimatic, 6 plain iambic, 7 iambic A, 8 iambic B, 9 keyahead. Saved to flash. |
 | `90 nn vv` | Play note `nn` on the sidetone (velocity 0 = note off). |
 | `80 nn vv` | Stop the MIDI sidetone note. |
@@ -82,10 +83,11 @@ In passthrough mode the dit and dah paddles are sent directly as notes 1 and
 
 As in the Vail adapter's PolyBuzzer, there are two priority slots. Local
 keying (slot 0) overrides MIDI notes from the host (slot 1). The tone is a
-sine at about -12 dBFS (`SIDETONE_AMPLITUDE`) with a 5 ms rise and fall
-(`SIDETONE_RAMP_MS`) to avoid key clicks. It is added to the USB audio after
-the host volume is applied, so the computer's volume control does not change
-the sidetone level.
+sine with a 5 ms rise and fall (`SIDETONE_RAMP_MS`) to avoid key clicks.
+Its level is set with CC4 and defaults to -12 dBFS
+(`DEFAULT_SIDETONE_VOLUME`). It is added to the USB audio after the host
+volume is applied, so the computer's volume control does not change the
+sidetone level.
 
 ## How it differs from the Vail adapter
 
@@ -97,6 +99,7 @@ the sidetone level.
   keyer 1, so a CC1/CC2 change in passthrough could save it as straight key.
 - `B0 01 00` gives a 2 ms dit instead of 0 ms.
 - `B0 03 vv` is an extra command for setting the sidetone pitch in Hz.
+- `B0 04 vv` is an extra command for setting the sidetone volume.
 - Settings are saved in the last 4 KB flash sector, 2 s after the last
   change. The erase holds off interrupts for about 50 ms, so audio glitches
   once each time a setting is saved.

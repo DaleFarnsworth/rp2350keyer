@@ -16,6 +16,9 @@ void sidetone_tone(int slot, uint32_t frequency_hz);
 void sidetone_note(int slot, uint8_t note);
 void sidetone_off(int slot);
 
+// Sidetone volume: 127 is 0 dBFS, each step below is -0.5 dB, 0 is off.
+void sidetone_set_volume(uint8_t volume);
+
 // Next mono sample, called from the I2S fill interrupt.
 int32_t sidetone_next_sample(void);
 
