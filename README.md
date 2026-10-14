@@ -53,20 +53,40 @@ ninja -C build
 Hold BOOTSEL while plugging in the Pico 2, then copy
 `build/pico2_vail_audio.uf2` to the `RP2350` drive.
 
-## MIDI protocol (from the Vail adapter)
+## MIDI protocol
 
-Channel 1 only.
+The device uses the Vail adapter's MIDI protocol on channel 1, plus two
+extra controllers (CC3 and CC4) for the sidetone. Values are hex; `vv`, `nn`
+and `kk` are 00–7F.
 
-| Message | Meaning |
+| Message | Meaning | Default | Saved | Source |
+|---|---|---|---|---|
+| `B0 00 vv` | Mode: `vv` > 3F is keyboard mode, otherwise MIDI mode. Echoed back. There is no HID keyboard, so the device sends MIDI either way. | keyboard | no | Vail |
+| `B0 01 vv` | Dit duration = `vv` × 2 ms (`00` gives 2 ms) | `32` (100 ms) | yes | Vail |
+| `B0 02 nn` | Sidetone note number (`45` = A4 = 440 Hz). Clears a CC3 pitch. | `45` | yes | Vail |
+| `B0 03 vv` | Sidetone pitch = `vv` × 10 Hz (10–1270 Hz). `00` goes back to the CC2 note. | `00` (use CC2) | yes | added |
+| `B0 04 vv` | Sidetone volume: `7F` is 0 dBFS, each step below is −0.5 dB, `00` is off. Applies to keyed and MIDI-note sidetone. | `67` (−12 dBFS) | yes | added |
+| `C0 kk` | Keyer (see below) | `01` | yes | Vail |
+| `90 nn vv` | Play note `nn` on the sidetone. Velocity `00` is note off. | | | Vail |
+| `80 nn vv` | Stop the MIDI sidetone note | | | Vail |
+
+Keyers selected by `C0 kk`; anything above `09` selects passthrough:
+
+| `kk` | Keyer |
 |---|---|
-| `B0 00 vv` | Mode: `vv` > 63 is keyboard mode, otherwise MIDI mode. Echoed back. This device has no HID keyboard, so it always sends MIDI. |
-| `B0 01 vv` | Dit duration = `vv` × 2 ms. Saved to flash. |
-| `B0 02 nn` | Sidetone note number (69 = A4 = 440 Hz). Saved to flash. |
-| `B0 03 vv` | Sidetone pitch = `vv` × 10 Hz (10–1270 Hz); `00` goes back to the CC2 note. Whichever of CC2 and CC3 came last sets the pitch. Saved to flash. Not part of the Vail protocol. |
-| `B0 04 vv` | Sidetone volume: 127 is 0 dBFS, each step below is -0.5 dB, 0 is off. Default 103 (-12 dBFS). Applies to keyed and MIDI-note sidetone. Saved to flash. Not part of the Vail protocol. |
-| `C0 kk` | Keyer: 0 passthrough, 1 straight key, 2 bug, 3 electric bug, 4 single dot, 5 ultimatic, 6 plain iambic, 7 iambic A, 8 iambic B, 9 keyahead. Saved to flash. |
-| `90 nn vv` | Play note `nn` on the sidetone (velocity 0 = note off). |
-| `80 nn vv` | Stop the MIDI sidetone note. |
+| `00` | Passthrough (paddles sent as notes 1 and 2) |
+| `01` | Straight key |
+| `02` | Bug |
+| `03` | Electric bug |
+| `04` | Single dot |
+| `05` | Ultimatic |
+| `06` | Plain iambic |
+| `07` | Iambic A |
+| `08` | Iambic B |
+| `09` | Keyahead |
+
+Whichever of CC2 and CC3 arrived last sets the keying sidetone pitch.
+Saved settings are written to flash 2 s after the last change.
 
 The device sends:
 
