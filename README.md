@@ -62,6 +62,7 @@ Channel 1 only.
 | `B0 00 vv` | Mode: `vv` > 63 is keyboard mode, otherwise MIDI mode. Echoed back. This device has no HID keyboard, so it always sends MIDI. |
 | `B0 01 vv` | Dit duration = `vv` × 2 ms. Saved to flash. |
 | `B0 02 nn` | Sidetone note number (69 = A4 = 440 Hz). Saved to flash. |
+| `B0 03 vv` | Sidetone pitch = `vv` × 10 Hz (10–1270 Hz); `00` goes back to the CC2 note. Whichever of CC2 and CC3 came last sets the pitch. Saved to flash. Not part of the Vail protocol. |
 | `C0 kk` | Keyer: 0 passthrough, 1 straight key, 2 bug, 3 electric bug, 4 single dot, 5 ultimatic, 6 plain iambic, 7 iambic A, 8 iambic B, 9 keyahead. Saved to flash. |
 | `90 nn vv` | Play note `nn` on the sidetone (velocity 0 = note off). |
 | `80 nn vv` | Stop the MIDI sidetone note. |
@@ -95,6 +96,7 @@ the sidetone level.
 - Passthrough (keyer 0) is saved to flash. The original reported it as
   keyer 1, so a CC1/CC2 change in passthrough could save it as straight key.
 - `B0 01 00` gives a 2 ms dit instead of 0 ms.
+- `B0 03 vv` is an extra command for setting the sidetone pitch in Hz.
 - Settings are saved in the last 4 KB flash sector, 2 s after the last
   change. The erase holds off interrupts for about 50 ms, so audio glitches
   once each time a setting is saved.

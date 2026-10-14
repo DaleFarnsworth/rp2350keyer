@@ -19,9 +19,10 @@ VailAdapter::VailAdapter() {
     this->ditDuration = DEFAULT_ADAPTER_DIT_DURATION_MS;
 }
 
-void VailAdapter::Begin(uint8_t keyerType, uint16_t ditDurationMs, uint8_t note) {
+void VailAdapter::Begin(uint8_t keyerType, uint16_t ditDurationMs, uint8_t note, uint16_t freqHz) {
     this->ditDuration = ditDurationMs;
     this->txNote = note;
+    this->txFreqHz = freqHz;
     this->keyer = GetKeyerByNumber(keyerType, this);
     if (this->keyer) {
         this->keyer->SetDitDuration(this->ditDuration);
@@ -63,14 +64,24 @@ void VailAdapter::settingsChanged(uint8_t keyerType) {
         .keyer_type = keyerType,
         .dit_duration_ms = (uint16_t) this->ditDuration,
         .tx_note = (uint8_t) this->txNote,
+        .tx_freq_hz = (uint16_t) this->txFreqHz,
     };
     settings_save_later(&s);
+}
+
+// Local keying sidetone: the CC3 frequency if set, otherwise the CC2 note
+void VailAdapter::startTxTone() {
+    if (this->txFreqHz) {
+        sidetone_tone(SLOT_TX, this->txFreqHz);
+    } else {
+        sidetone_note(SLOT_TX, this->txNote);
+    }
 }
 
 // Straight key (no relay information): MIDI note 0
 void VailAdapter::BeginTx() {
     this->keyIsPressed = true;
-    sidetone_note(SLOT_TX, this->txNote);
+    startTxTone();
     this->midiKey(0, true);
 }
 
@@ -89,7 +100,7 @@ static uint8_t relayNote(int relay) {
 // Keyer output: MIDI note 1 for dit, 2 for dah
 void VailAdapter::BeginTx(int relay) {
     this->keyIsPressed = true;
-    sidetone_note(SLOT_TX, this->txNote);
+    startTxTone();
     this->midiKey(relayNote(relay), true);
 }
 
@@ -113,7 +124,7 @@ void VailAdapter::ProcessPaddleInput(Paddle paddle, bool pressed) {
         bool any = this->passthroughPressed[PADDLE_DIT] || this->passthroughPressed[PADDLE_DAH];
         if (any && !this->keyIsPressed) {
             this->keyIsPressed = true;
-            sidetone_note(SLOT_TX, this->txNote);
+            startTxTone();
         } else if (!any && this->keyIsPressed) {
             this->keyIsPressed = false;
             sidetone_off(SLOT_TX);
@@ -144,7 +155,19 @@ void VailAdapter::HandleMIDI(const MidiPacket &event) {
         }
         case 2:
             this->txNote = event.byte3;
+            this->txFreqHz = 0;  // the most recent of CC2 and CC3 wins
             printf("TX note set to: %u\n", this->txNote);
+            this->settingsChanged(getCurrentKeyerType());
+            break;
+        case 3:
+            // Not in the Vail adapter: sidetone pitch in 10 Hz steps.
+            // 0 goes back to the CC2 note.
+            this->txFreqHz = event.byte3 * 10;
+            if (this->txFreqHz) {
+                printf("TX frequency set to: %u Hz\n", this->txFreqHz);
+            } else {
+                printf("TX frequency cleared, using note %u\n", this->txNote);
+            }
             this->settingsChanged(getCurrentKeyerType());
             break;
         }
