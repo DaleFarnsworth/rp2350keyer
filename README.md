@@ -144,7 +144,9 @@ output is exactly 48 kHz.
 
 ## License
 
+MIT License; see [LICENSE](LICENSE).
+
 The keyer code and MIDI protocol come from the Vail adapter (MIT License,
 Copyright (c) 2020 Neale Pickett). The I2S PIO program is adapted from
 pico-extras (BSD-3-Clause), and the UAC2 descriptors and OS-guessing quirk
-are adapted from TinyUSB (MIT).
+are adapted from TinyUSB (MIT). Their notices are in [LICENSE](LICENSE).
