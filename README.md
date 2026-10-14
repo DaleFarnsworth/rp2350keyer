@@ -33,8 +33,8 @@ It shows up over USB as a single composite device with two functions:
 | GND | common (sleeve) |
 
 The key inputs are active low with internal pull-ups. Headphones go in the
-breakout's jack. The class-D speaker output is also on; set
-`DAC_ENABLE_SPEAKER` to 0 in `src/config.h` to turn it off.
+breakout's jack. The class-D speaker output is off; set
+`DAC_ENABLE_SPEAKER` to 1 in `src/config.h` to turn it on.
 All pins and levels are in [src/config.h](src/config.h).
 
 UART0 (GP0 TX, 115200 baud) carries debug messages.

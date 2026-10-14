@@ -19,7 +19,7 @@
 
 // Enable the DAC3100's mono class-D speaker output in addition to the
 // headphone output.
-#define DAC_ENABLE_SPEAKER  1
+#define DAC_ENABLE_SPEAKER  0
 
 // Headphone and speaker analog attenuation, in register units
 // (0 = 0 dB, roughly -0.5 dB per step, see datasheet table 6-24).
