@@ -1,7 +1,8 @@
 #pragma once
 
-// Board configuration for a Raspberry Pi Pico 2 wired to an
-// Adafruit TLV320DAC3100 I2S DAC breakout.
+// Board configuration for a Waveshare RP2350-Zero wired to an
+// Adafruit TLV320DAC3100 I2S DAC breakout. Pin numbers are GPIO numbers;
+// the Zero's pad numbers are in the README.
 
 // ---- TLV320DAC3100 wiring -------------------------------------------------
 // I2S: BCLK and WSEL must be consecutive pins (PIO side-set).
@@ -32,7 +33,10 @@
 #define KEY_PIN             6   // straight key
 #define DEBOUNCE_MS         10  // same as the Vail adapter's Bounce default
 
-#define LED_PIN             PICO_DEFAULT_LED_PIN
+// ---- Status LED ------------------------------------------------------------
+// The Zero has no plain LED, only a WS2812 RGB LED on GP16.
+#define STATUS_LED_PIN      PICO_DEFAULT_WS2812_PIN
+#define STATUS_LED_ON_GRB   0x100000u   // dim green, in the LED's G, R, B order
 
 // ---- Audio ----------------------------------------------------------------
 #define AUDIO_SAMPLE_RATE   48000

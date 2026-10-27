@@ -61,6 +61,11 @@ src/quirk_os_guessing.c, src/quirk_os_guessing.h
 src/i2s_out.pio
   Adapted from pico-extras audio_i2s.pio, https://github.com/raspberrypi/pico-extras
 
+src/ws2812.pio
+  From pico-examples pio/ws2812/ws2812.pio, https://github.com/raspberrypi/pico-examples
+
+  Both under:
+
   BSD 3-Clause License
 
   Copyright (c) 2020 Raspberry Pi (Trading) Ltd.
@@ -94,4 +99,4 @@ src/i2s_out.pio
 pico_sdk_import.cmake
   From the Raspberry Pi Pico SDK, https://github.com/raspberrypi/pico-sdk
   Copyright (c) 2020 Raspberry Pi (Trading) Ltd., BSD 3-Clause License
-  (the same terms as src/i2s_out.pio above).
+  (the same terms as src/i2s_out.pio and src/ws2812.pio above).

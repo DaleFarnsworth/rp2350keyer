@@ -1,6 +1,6 @@
-# Pico 2 Vail Audio
+# RP2350-Zero Vail Audio
 
-Firmware for a Raspberry Pi Pico 2 with an Adafruit TLV320DAC3100 I2S DAC.
+Firmware for a Waveshare RP2350-Zero with an Adafruit TLV320DAC3100 I2S DAC.
 It shows up over USB as a single composite device with two functions:
 
 - **USB sound card**: a UAC2 stereo speaker, 48 kHz, 16-bit, with an
@@ -13,31 +13,38 @@ It shows up over USB as a single composite device with two functions:
 
 ## Wiring
 
-| Pico 2 pin | TLV320DAC3100 breakout | Notes |
+Pad numbers are from the RP2350-Zero's pinout.
+
+| RP2350-Zero | Pad | TLV320DAC3100 breakout | Notes |
+|---|---|---|---|
+| 3V3 | 3 | VIN | |
+| GND | 2 | GND | |
+| GP4 | 19 | SDA | I2C0 |
+| GP5 | 18 | SCL | I2C0 |
+| GP7 | 16 | RST | active low |
+| GP9 | 14 | DIN | I2S data |
+| GP10 | 13 | BCK | I2S bit clock |
+| GP11 | 12 | WSEL | I2S word select (must be BCK + 1) |
+| — | | MCLK | leave unconnected; the DAC PLL runs from BCK |
+
+| RP2350-Zero | Pad | Key |
 |---|---|---|
-| 3V3 (pin 36) | VIN | |
-| GND | GND | |
-| GP4 | SDA | I2C0 |
-| GP5 | SCL | I2C0 |
-| GP7 | RST | active low |
-| GP9 | DIN | I2S data |
-| GP10 | BCK | I2S bit clock |
-| GP11 | WSEL | I2S word select (must be BCK + 1) |
-| — | MCLK | leave unconnected; the DAC PLL runs from BCK |
+| GP2 | 21 | dit paddle (tip) |
+| GP3 | 20 | dah paddle (ring) |
+| GP6 | 17 | straight key |
+| GND | 2 | common (sleeve) |
 
-| Pico 2 pin | Key |
-|---|---|
-| GP2 | dit paddle (tip) |
-| GP3 | dah paddle (ring) |
-| GP6 | straight key |
-| GND | common (sleeve) |
-
-The key inputs are active low with internal pull-ups. Headphones go in the
+The Zero has only one GND pad, so join the DAC's and the keys' grounds
+before they reach it. The key inputs are active low with internal pull-ups. Headphones go in the
 breakout's jack. The class-D speaker output is off; set
 `DAC_ENABLE_SPEAKER` to 1 in `src/config.h` to turn it on.
 All pins and levels are in [src/config.h](src/config.h).
 
-UART0 (GP0 TX, 115200 baud) carries debug messages.
+UART0 (GP0 TX, pad 23, 115200 baud) carries debug messages.
+
+The Zero's RGB LED (a WS2812 on GP16) is the status light: it blinks green
+until the computer has set up the USB device, then stays dim green, going
+dark while the key is down.
 
 ## Building
 
@@ -50,8 +57,8 @@ cmake -S . -B build -G Ninja
 ninja -C build
 ```
 
-Hold BOOTSEL while plugging in the Pico 2, then copy
-`build/pico2_vail_audio.uf2` to the `RP2350` drive.
+Hold the Zero's BOOT button while plugging it in, then copy
+`build/rp2350_zero_vail_audio.uf2` to the `RP2350` drive.
 
 ## MIDI protocol
 
@@ -129,6 +136,7 @@ sidetone level.
 | File | Purpose |
 |---|---|
 | `src/main.cpp` | Main loop, debounced key inputs, LED |
+| `src/status_led.*`, `src/ws2812.pio` | PIO driver for the WS2812 status LED |
 | `src/adapter.*` | Vail MIDI handling and keying output (port of `adapter.cpp`) |
 | `src/keyers.*` | Vail keyers (port of `keyers.cpp`) |
 | `src/sidetone.*` | Sine sidetone with priority slots (replaces PolyBuzzer) |
@@ -148,5 +156,7 @@ MIT License; see [LICENSE](LICENSE).
 
 The keyer code and MIDI protocol come from the Vail adapter (MIT License,
 Copyright (c) 2020 Neale Pickett). The I2S PIO program is adapted from
-pico-extras (BSD-3-Clause), and the UAC2 descriptors and OS-guessing quirk
-are adapted from TinyUSB (MIT). Their notices are in [THIRD_PARTY_NOTICES](THIRD_PARTY_NOTICES).
+pico-extras and the WS2812 program comes from pico-examples (both
+BSD-3-Clause), and the UAC2 descriptors and OS-guessing quirk are adapted
+from TinyUSB (MIT). Their notices are in
+[THIRD_PARTY_NOTICES](THIRD_PARTY_NOTICES).

@@ -1,4 +1,4 @@
-// Pico 2 + TLV320DAC3100: USB sound card and Vail-compatible USB MIDI keyer.
+// RP2350-Zero + TLV320DAC3100: USB sound card and Vail-compatible USB MIDI keyer.
 
 #include <stdio.h>
 
@@ -9,6 +9,7 @@
 #include "hardware/gpio.h"
 #include "pico/stdlib.h"
 #include "settings.h"
+#include "status_led.h"
 #include "tusb.h"
 
 // Debounced, active-low input. Same behaviour as the Vail adapter's Bounce2
@@ -74,16 +75,15 @@ static void led_task(uint32_t now) {
     } else {
         on = true;
     }
-    gpio_put(LED_PIN, on);
+    status_led_set(on);
 }
 
 int main() {
     set_sys_clock_khz(SYS_CLOCK_KHZ, true);
     stdio_init_all();
-    printf("\nPico 2 Vail Audio starting\n");
+    printf("\nRP2350-Zero Vail Audio starting\n");
 
-    gpio_init(LED_PIN);
-    gpio_set_dir(LED_PIN, GPIO_OUT);
+    status_led_init();
 
     dit.attach(DIT_PIN);
     dah.attach(DAH_PIN);
