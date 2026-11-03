@@ -131,6 +131,13 @@ Its level is set with CC4 and defaults to -12 dBFS
 volume is applied, so the computer's volume control does not change the
 sidetone level.
 
+While the sidetone sounds, from local keying or a MIDI note, the audio
+from the computer is muted. It fades out and back in over the same 5 ms,
+so it doesn't click, and comes back as soon as each tone has faded out.
+`RX_MUTE_HANG_MS` keeps it muted longer after each tone, for example to
+stop it returning in the gaps between elements, and
+`RX_MUTE_DURING_SIDETONE` set to 0 turns the muting off.
+
 ## How it differs from the Vail adapter
 
 - No HID keyboard, piezo buzzer, radio output, CW memories, button menu,

@@ -51,6 +51,12 @@
 #define DEFAULT_SIDETONE_VOLUME  103    // -12 dBFS
 // Rise/fall time of the sidetone envelope, to avoid key clicks.
 #define SIDETONE_RAMP_MS    5
+// Mute the audio from the computer while the sidetone sounds, fading it
+// out and back in over SIDETONE_RAMP_MS. RX_MUTE_HANG_MS keeps it muted
+// that much longer after each tone, so it doesn't come back between
+// elements; 0 brings it back as soon as each tone has faded out.
+#define RX_MUTE_DURING_SIDETONE 1
+#define RX_MUTE_HANG_MS         0
 
 // ---- Vail adapter defaults (from vail-adapter config.h) -------------------
 #define DEFAULT_TONE_NOTE                69   // A4, 440 Hz
