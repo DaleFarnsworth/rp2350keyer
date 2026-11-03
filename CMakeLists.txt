@@ -23,6 +23,7 @@ add_executable(rp2350_zero_vail_audio
     src/status_led.c
     src/settings.c
     src/usb_descriptors.c
+    src/usb_debug.c
     src/quirk_os_guessing.c
 )
 
@@ -43,7 +44,8 @@ target_link_libraries(rp2350_zero_vail_audio PRIVATE
     tinyusb_device
 )
 
-# USB is owned by our TinyUSB composite device; debug output goes to UART0,
+# USB is owned by our TinyUSB composite device, which has its own serial
+# port for debug output (src/usb_debug.c). Debug output also goes to UART0,
 # moved from the board's default GP0/GP1, which are the key inputs, to
 # GP12 (TX) and GP13 (RX).
 pico_enable_stdio_usb(rp2350_zero_vail_audio 0)

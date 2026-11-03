@@ -46,6 +46,9 @@ uint8_t const *tud_descriptor_device_cb(void) {
 #define EPNUM_AUDIO_FB    0x81
 #define EPNUM_MIDI_OUT    0x02
 #define EPNUM_MIDI_IN     0x82
+#define EPNUM_CDC_NOTIF   0x83
+#define EPNUM_CDC_OUT     0x04
+#define EPNUM_CDC_IN      0x84
 
 #define TUD_MIDI_IAD_LEN  8
 // Groups the MIDI AudioControl and MIDIStreaming interfaces into a single
@@ -55,7 +58,7 @@ uint8_t const *tud_descriptor_device_cb(void) {
   TUSB_CLASS_AUDIO, AUDIO_SUBCLASS_CONTROL, AUDIO_FUNC_PROTOCOL_CODE_UNDEF, 0
 
 #define CONFIG_TOTAL_LEN  (TUD_CONFIG_DESC_LEN + TUD_AUDIO_SPEAKER_STEREO_FB_DESC_LEN \
-                           + TUD_MIDI_IAD_LEN + TUD_MIDI_DESC_LEN)
+                           + TUD_MIDI_IAD_LEN + TUD_MIDI_DESC_LEN + TUD_CDC_DESC_LEN)
 
 enum {
   STRID_LANGID = 0,
@@ -64,6 +67,7 @@ enum {
   STRID_SERIAL,
   STRID_AUDIO,
   STRID_MIDI,
+  STRID_CDC,
 };
 
 #define CONFIG_DESCRIPTOR(_fbsize) \
@@ -72,7 +76,8 @@ enum {
       CFG_TUD_AUDIO_FUNC_1_N_BYTES_PER_SAMPLE_RX, CFG_TUD_AUDIO_FUNC_1_RESOLUTION_RX, \
       EPNUM_AUDIO_OUT, CFG_TUD_AUDIO_FUNC_1_EP_OUT_SZ_MAX, EPNUM_AUDIO_FB, _fbsize), \
   TUD_MIDI_IAD(ITF_NUM_MIDI), \
-  TUD_MIDI_DESCRIPTOR(ITF_NUM_MIDI, STRID_MIDI, EPNUM_MIDI_OUT, EPNUM_MIDI_IN, 64)
+  TUD_MIDI_DESCRIPTOR(ITF_NUM_MIDI, STRID_MIDI, EPNUM_MIDI_OUT, EPNUM_MIDI_IN, 64), \
+  TUD_CDC_DESCRIPTOR(ITF_NUM_CDC, STRID_CDC, EPNUM_CDC_NOTIF, 8, EPNUM_CDC_OUT, EPNUM_CDC_IN, 64)
 
 // Windows (the default): 4-byte 16.16 feedback on full speed
 static uint8_t const desc_configuration_default[] = { CONFIG_DESCRIPTOR(4) };
@@ -120,6 +125,7 @@ static char const *string_desc_arr[] = {
   [STRID_SERIAL]       = NULL,                            // from flash unique ID
   [STRID_AUDIO]        = "Vail Audio",
   [STRID_MIDI]         = "Vail Adapter",
+  [STRID_CDC]          = "Vail Debug",
 };
 
 static uint16_t _desc_str[32 + 1];

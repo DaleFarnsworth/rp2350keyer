@@ -190,6 +190,7 @@ static bool feature_unit_set_request(audio_control_request_t const *request, uin
   if (request->bControlSelector == AUDIO_FU_CTRL_MUTE) {
     TU_VERIFY(request->wLength == sizeof(audio_control_cur_1_t));
     mute[request->bChannelNumber] = ((audio_control_cur_1_t const *) buf)->bCur;
+    printf("audio: channel %u mute %u\n", request->bChannelNumber, mute[request->bChannelNumber]);
     update_gains();
     return true;
   } else if (request->bControlSelector == AUDIO_FU_CTRL_VOLUME) {
@@ -198,6 +199,7 @@ static bool feature_unit_set_request(audio_control_request_t const *request, uin
     if (v < VOLUME_MIN) v = VOLUME_MIN;
     if (v > VOLUME_MAX) v = VOLUME_MAX;
     volume[request->bChannelNumber] = v;
+    printf("audio: channel %u volume %d/256 dB\n", request->bChannelNumber, v);
     update_gains();
     return true;
   }
@@ -222,6 +224,7 @@ bool tud_audio_set_itf_cb(uint8_t rhport, tusb_control_request_t const *p_reques
   (void) rhport;
   uint8_t const itf = tu_u16_low(tu_le16toh(p_request->wIndex));
   uint8_t const alt = tu_u16_low(tu_le16toh(p_request->wValue));
+  printf("audio: interface %u alt %u\n", itf, alt);
 
   if (itf == ITF_NUM_AUDIO_STREAMING && alt != 0) {
     ring_head = ring_tail;    // discard anything left from a previous stream
