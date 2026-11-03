@@ -12,6 +12,8 @@
 
 #include <math.h>
 #include <stdio.h>
+
+#include "hang_trace.h"
 #include <string.h>
 
 #include "config.h"
@@ -209,6 +211,7 @@ static bool feature_unit_set_request(audio_control_request_t const *request, uin
 }
 
 bool tud_audio_get_req_entity_cb(uint8_t rhport, tusb_control_request_t const *p_request) {
+  hang_stage(STAGE_CB_GET_REQ);
   audio_control_request_t const *request = (audio_control_request_t const *) p_request;
   if (request->bEntityID == UAC2_ENTITY_CLOCK) return clock_get_request(rhport, request);
   if (request->bEntityID == UAC2_ENTITY_FEATURE_UNIT) return feature_unit_get_request(rhport, request);
@@ -216,6 +219,7 @@ bool tud_audio_get_req_entity_cb(uint8_t rhport, tusb_control_request_t const *p
 }
 
 bool tud_audio_set_req_entity_cb(uint8_t rhport, tusb_control_request_t const *p_request, uint8_t *buf) {
+  hang_stage(STAGE_CB_SET_REQ);
   (void) rhport;
   audio_control_request_t const *request = (audio_control_request_t const *) p_request;
   if (request->bEntityID == UAC2_ENTITY_FEATURE_UNIT) return feature_unit_set_request(request, buf);
@@ -223,6 +227,7 @@ bool tud_audio_set_req_entity_cb(uint8_t rhport, tusb_control_request_t const *p
 }
 
 bool tud_audio_set_itf_cb(uint8_t rhport, tusb_control_request_t const *p_request) {
+  hang_stage(STAGE_CB_SET_ITF);
   (void) rhport;
   uint8_t const itf = tu_u16_low(tu_le16toh(p_request->wIndex));
   uint8_t const alt = tu_u16_low(tu_le16toh(p_request->wValue));
@@ -265,6 +270,8 @@ static void reset_iso_endpoint(uint8_t ep_addr) {
 }
 
 bool tud_audio_set_itf_close_EP_cb(uint8_t rhport, tusb_control_request_t const *p_request) {
+  hang_stage(STAGE_CB_SET_ITF_CLOSE);
+  printf("audio: closing interface %u endpoints\n", tu_u16_low(tu_le16toh(p_request->wIndex)));
   (void) rhport;
   uint8_t const itf = tu_u16_low(tu_le16toh(p_request->wIndex));
   uint8_t const alt = tu_u16_low(tu_le16toh(p_request->wValue));

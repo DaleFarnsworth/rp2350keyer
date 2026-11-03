@@ -5,6 +5,7 @@
 #include "hardware/irq.h"
 #include "hardware/pio.h"
 #include "i2s_out.pio.h"
+#include "hang_trace.h"
 
 // 128 frames = 2.67 ms per buffer at 48 kHz
 #define I2S_BUF_FRAMES 128
@@ -14,6 +15,7 @@ static int dma_chan[2];
 static i2s_fill_fn fill_cb;
 
 static void __isr dma_handler(void) {
+  hang_dma_irq();
   for (int i = 0; i < 2; i++) {
     int ch = dma_chan[i];
     if (dma_irqn_get_channel_status(0, ch)) {

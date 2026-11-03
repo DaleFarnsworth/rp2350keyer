@@ -11,6 +11,7 @@
 #include "settings.h"
 #include "tusb.h"
 #include "usb_debug.h"
+#include "hang_trace.h"
 
 // Debounced, active-low input. Same behaviour as the Vail adapter's Bounce2
 // default mode: a change is accepted once the pin has been stable for
@@ -87,6 +88,7 @@ int main() {
     stdio_init_all();
     usb_debug_init();
     printf("\nPico 2 Vail Audio starting\n");
+    hang_trace_start();
 
     gpio_init(LED_PIN);
     gpio_set_dir(LED_PIN, GPIO_OUT);
@@ -115,13 +117,22 @@ int main() {
     while (true) {
         uint32_t now = millis();
 
+        hang_trace_feed();
+        hang_loop();
+
+        hang_stage(STAGE_TUD_TASK);
         tud_task();
+        hang_stage(STAGE_USB_DEBUG);
         usb_debug_task();
+        hang_stage(STAGE_AUDIO_TASK);
         audio_task();
+        hang_stage(STAGE_MIDI_TASK);
         midi_task();
 
+        hang_stage(STAGE_ADAPTER_TICK);
         adapter.Tick(now);
 
+        hang_stage(STAGE_KEYS);
         if (key.update(now)) {
             adapter.ProcessPaddleInput(PADDLE_STRAIGHT, key.pressed());
         }
@@ -132,7 +143,9 @@ int main() {
             adapter.ProcessPaddleInput(PADDLE_DAH, dah.pressed());
         }
 
+        hang_stage(STAGE_SETTINGS);
         settings_task(now);
+        hang_stage(STAGE_LED);
         led_task(now);
     }
 }

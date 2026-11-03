@@ -23,6 +23,7 @@ add_executable(pico2_vail_audio
     src/settings.c
     src/usb_descriptors.c
     src/usb_debug.c
+    src/hang_trace.c
     src/quirk_os_guessing.c
 )
 
