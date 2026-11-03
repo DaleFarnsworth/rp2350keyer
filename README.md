@@ -1,7 +1,7 @@
 # Pico 2 Vail Audio
 
 Firmware for a Raspberry Pi Pico 2 with an Adafruit TLV320DAC3100 I2S DAC.
-It shows up over USB as a single composite device with two functions:
+It shows up over USB as a single composite device with three functions:
 
 - **USB sound card**: a UAC2 stereo speaker, 48 kHz, 16-bit, with an
   asynchronous feedback endpoint and host volume/mute. No driver is
@@ -10,6 +10,8 @@ It shows up over USB as a single composite device with two functions:
   [Vail adapter](https://github.com/Vail-CW/vail-adapter) protocol, so
   [Vail](https://vail.woozle.org/) can drive it like a Vail adapter. The
   Vail keyers are included, and the sidetone is mixed into the DAC output.
+- **USB serial port**: debug messages (`/dev/ttyACM0` on Linux). Opening it
+  at 1200 baud restarts the Pico 2 in its USB bootloader.
 
 ## Wiring
 
@@ -37,7 +39,13 @@ breakout's jack. The class-D speaker output is off; set
 `DAC_ENABLE_SPEAKER` to 1 in `src/config.h` to turn it on.
 All pins and levels are in [src/config.h](src/config.h).
 
-UART0 (GP0 TX, 115200 baud) carries debug messages.
+Debug messages go to the USB serial port, and also to UART0 (GP0 TX,
+115200 baud). The USB port keeps the last 4 KB of messages, so the ones
+from startup are still there when you open it, for example with:
+
+```bash
+picocom /dev/ttyACM0
+```
 
 ## Building
 
@@ -51,7 +59,10 @@ ninja -C build
 ```
 
 Hold BOOTSEL while plugging in the Pico 2, then copy
-`build/pico2_vail_audio.uf2` to the `RP2350` drive.
+`build/pico2_vail_audio.uf2` to the `RP2350` drive. Once this firmware is
+running, you can skip the button: open its serial port at 1200 baud
+(`stty -F /dev/ttyACM0 1200`, or an Arduino-style upload) and the drive
+appears.
 
 ## MIDI protocol
 
@@ -136,7 +147,8 @@ sidetone level.
 | `src/i2s_out.*` | PIO + DMA I2S transmitter |
 | `src/tlv320dac3100.*` | DAC register setup (PLL from BCLK) |
 | `src/settings.*` | Flash-backed settings |
-| `src/usb_descriptors.*` | Composite UAC2 + MIDI descriptors |
+| `src/usb_descriptors.*` | Composite UAC2 + MIDI + CDC descriptors |
+| `src/usb_debug.*` | Debug output over the USB serial port, 1200-baud bootloader entry |
 | `src/quirk_os_guessing.*` | From TinyUSB: picks the feedback format per host OS |
 
 The clock runs at 153.6 MHz, so the I2S PIO divider is exactly 50 and the

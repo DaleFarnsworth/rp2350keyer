@@ -34,7 +34,7 @@ extern "C" {
 //------------- CLASS -------------//
 #define CFG_TUD_AUDIO         1
 #define CFG_TUD_MIDI          1
-#define CFG_TUD_CDC           0
+#define CFG_TUD_CDC           1   // debug output (usb_debug.c)
 #define CFG_TUD_MSC           0
 #define CFG_TUD_HID           0
 #define CFG_TUD_VENDOR        0
@@ -61,6 +61,11 @@ extern "C" {
 //------------- MIDI -------------//
 #define CFG_TUD_MIDI_RX_BUFSIZE 64
 #define CFG_TUD_MIDI_TX_BUFSIZE 64
+
+//------------- CDC -------------//
+#define CFG_TUD_CDC_RX_BUFSIZE  64
+#define CFG_TUD_CDC_TX_BUFSIZE  256
+#define CFG_TUD_CDC_EP_BUFSIZE  64
 
 #ifdef __cplusplus
 }

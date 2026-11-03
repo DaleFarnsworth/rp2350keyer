@@ -10,6 +10,7 @@
 #include "pico/stdlib.h"
 #include "settings.h"
 #include "tusb.h"
+#include "usb_debug.h"
 
 // Debounced, active-low input. Same behaviour as the Vail adapter's Bounce2
 // default mode: a change is accepted once the pin has been stable for
@@ -65,6 +66,10 @@ static void midi_task() {
     }
 }
 
+extern "C" void tud_mount_cb(void) {
+    printf("USB: configured by the host\n");
+}
+
 static void led_task(uint32_t now) {
     bool on;
     if (!tud_mounted()) {
@@ -80,6 +85,7 @@ static void led_task(uint32_t now) {
 int main() {
     set_sys_clock_khz(SYS_CLOCK_KHZ, true);
     stdio_init_all();
+    usb_debug_init();
     printf("\nPico 2 Vail Audio starting\n");
 
     gpio_init(LED_PIN);
@@ -110,6 +116,7 @@ int main() {
         uint32_t now = millis();
 
         tud_task();
+        usb_debug_task();
         audio_task();
         midi_task();
 

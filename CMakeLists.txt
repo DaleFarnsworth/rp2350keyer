@@ -22,6 +22,7 @@ add_executable(pico2_vail_audio
     src/tlv320dac3100.c
     src/settings.c
     src/usb_descriptors.c
+    src/usb_debug.c
     src/quirk_os_guessing.c
 )
 
@@ -41,7 +42,8 @@ target_link_libraries(pico2_vail_audio PRIVATE
     tinyusb_device
 )
 
-# USB is owned by our TinyUSB composite device; debug output goes to UART0.
+# USB is owned by our TinyUSB composite device, which has its own serial
+# port for debug output (src/usb_debug.c). Debug output also goes to UART0.
 pico_enable_stdio_usb(pico2_vail_audio 0)
 pico_enable_stdio_uart(pico2_vail_audio 1)
 
