@@ -9,6 +9,10 @@ enum {
   ITF_NUM_TOTAL
 };
 
+// Audio streaming endpoints, shared with audio.c
+#define EPNUM_AUDIO_OUT   0x01
+#define EPNUM_AUDIO_FB    0x81
+
 // Entity IDs used in TUD_AUDIO_SPEAKER_STEREO_FB_DESCRIPTOR
 #define UAC2_ENTITY_INPUT_TERMINAL      0x01
 #define UAC2_ENTITY_FEATURE_UNIT        0x02

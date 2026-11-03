@@ -15,6 +15,8 @@
 #include <string.h>
 
 #include "config.h"
+#include "hardware/structs/usb.h"
+#include "hardware/sync.h"
 #include "i2s_out.h"
 #include "sidetone.h"
 #include "tlv320dac3100.h"
@@ -232,6 +234,33 @@ bool tud_audio_set_itf_cb(uint8_t rhport, tusb_control_request_t const *p_reques
   return true;
 }
 
+// Workaround for TinyUSB 0.18 on the RP2040/RP2350. With iso endpoint
+// allocation (TUP_DCD_EDPT_ISO_ALLOC), selecting alternate setting 0 leaves
+// the audio OUT and feedback IN endpoints armed in hardware. When the host
+// next selects alternate setting 1 and TinyUSB arms them again, it finds
+// them already available and panics ("ep 01 was already available"). The
+// host always does that: alt 1, alt 0 while probing, then alt 1 to play.
+// So abort both in hardware and clear their buffer control when the
+// stream closes.
+static void reset_iso_endpoint(uint8_t ep_addr) {
+  uint8_t num = ep_addr & 0x0f;
+  bool in = ep_addr & 0x80;
+  uint32_t bit = 1u << (2 * num + (in ? 0 : 1));   // abort and buf_status layout
+
+  uint32_t irq = save_and_disable_interrupts();
+  hw_set_bits(&usb_hw->abort, bit);
+  while (!(usb_hw->abort_done & bit)) {}
+  if (in) {
+    usb_dpram->ep_buf_ctrl[num].in = 0;
+  } else {
+    usb_dpram->ep_buf_ctrl[num].out = 0;
+  }
+  usb_hw->buf_status = bit;                         // write 1 to clear
+  hw_clear_bits(&usb_hw->abort, bit);
+  usb_hw->abort_done = bit;                         // write 1 to clear
+  restore_interrupts(irq);
+}
+
 bool tud_audio_set_itf_close_EP_cb(uint8_t rhport, tusb_control_request_t const *p_request) {
   (void) rhport;
   uint8_t const itf = tu_u16_low(tu_le16toh(p_request->wIndex));
@@ -239,6 +268,8 @@ bool tud_audio_set_itf_close_EP_cb(uint8_t rhport, tusb_control_request_t const 
 
   if (itf == ITF_NUM_AUDIO_STREAMING && alt == 0) {
     streaming = false;
+    reset_iso_endpoint(EPNUM_AUDIO_OUT);
+    reset_iso_endpoint(EPNUM_AUDIO_FB);
   }
   return true;
 }
