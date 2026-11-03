@@ -42,8 +42,6 @@ uint8_t const *tud_descriptor_device_cb(void) {
 //--------------------------------------------------------------------+
 // Configuration descriptor
 //--------------------------------------------------------------------+
-#define EPNUM_AUDIO_OUT   0x01
-#define EPNUM_AUDIO_FB    0x81
 #define EPNUM_MIDI_OUT    0x02
 #define EPNUM_MIDI_IN     0x82
 #define EPNUM_CDC_NOTIF   0x83
