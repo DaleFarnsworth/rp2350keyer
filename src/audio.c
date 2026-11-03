@@ -51,6 +51,14 @@ static volatile int32_t gain_q15[N_CHANNELS] = { 32768, 32768 };
 // The host's volume without its mute, for the sidetone
 static volatile int32_t sidetone_gain_q15[N_CHANNELS] = { 32768, 32768 };
 
+// Gain on the computer's audio while the sidetone sounds, in Q15, ramped
+// so muting and unmuting don't click. Interrupt-only state.
+#define RX_MUTE_RAMP_SAMPLES (AUDIO_SAMPLE_RATE / 1000 * SIDETONE_RAMP_MS)
+#define RX_MUTE_STEP         (32768 / RX_MUTE_RAMP_SAMPLES)
+#define RX_MUTE_HANG_SAMPLES (AUDIO_SAMPLE_RATE / 1000 * RX_MUTE_HANG_MS)
+static int32_t rx_gain = 32768;
+static uint32_t rx_mute_hang;
+
 static inline int16_t clip16(int32_t v) {
   if (v > 32767) return 32767;
   if (v < -32768) return -32768;
@@ -78,9 +86,24 @@ static void fill_i2s(uint32_t *buf, uint32_t frames) {
     } else if (streaming && !priming) {
       underrun = true;
     }
+    int32_t st = sidetone_next_sample();
+#if RX_MUTE_DURING_SIDETONE
+    if (sidetone_sounding()) {
+      rx_mute_hang = RX_MUTE_HANG_SAMPLES + 1;
+    } else if (rx_mute_hang) {
+      rx_mute_hang--;
+    }
+    if (rx_mute_hang) {
+      rx_gain = (rx_gain > RX_MUTE_STEP) ? rx_gain - RX_MUTE_STEP : 0;
+    } else {
+      rx_gain = (rx_gain < 32768 - RX_MUTE_STEP) ? rx_gain + RX_MUTE_STEP : 32768;
+    }
+    int32_t l = (((int32_t) (int16_t) (f & 0xffff) * gl) >> 15) * rx_gain >> 15;
+    int32_t r = (((int32_t) (int16_t) (f >> 16) * gr) >> 15) * rx_gain >> 15;
+#else
     int32_t l = ((int32_t) (int16_t) (f & 0xffff) * gl) >> 15;
     int32_t r = ((int32_t) (int16_t) (f >> 16) * gr) >> 15;
-    int32_t st = sidetone_next_sample();
+#endif
     int32_t st_l = (st * sgl) >> 15;
     int32_t st_r = (st * sgr) >> 15;
     buf[i] = ((uint32_t) (uint16_t) clip16(r + st_r) << 16) | (uint16_t) clip16(l + st_l);

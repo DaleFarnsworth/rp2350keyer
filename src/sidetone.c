@@ -75,6 +75,10 @@ void sidetone_off(int slot) {
   sidetone_tone(slot, 0);
 }
 
+bool sidetone_sounding(void) {
+  return gate || amp > 0;
+}
+
 int32_t sidetone_next_sample(void) {
   if (gate) {
     // Keep the old pitch through the release so the fade-out is clean,

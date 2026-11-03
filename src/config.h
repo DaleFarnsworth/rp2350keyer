@@ -45,6 +45,12 @@
 #define DEFAULT_SIDETONE_VOLUME  103    // -12 dBFS
 // Rise/fall time of the sidetone envelope, to avoid key clicks.
 #define SIDETONE_RAMP_MS    5
+// Mute the audio from the computer while the sidetone sounds, fading it
+// out and back in over SIDETONE_RAMP_MS. RX_MUTE_HANG_MS keeps it muted
+// that much longer after each tone, so it doesn't come back between
+// elements; 0 brings it back as soon as each tone has faded out.
+#define RX_MUTE_DURING_SIDETONE 1
+#define RX_MUTE_HANG_MS         0
 // Scale the sidetone by the computer's volume for this device, as the
 // computer's audio is, so the two keep the same balance. The computer's
 // mute doesn't silence the sidetone.

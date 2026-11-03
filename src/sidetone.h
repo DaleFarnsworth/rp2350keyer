@@ -1,5 +1,6 @@
 #pragma once
 
+#include <stdbool.h>
 #include <stdint.h>
 
 #ifdef __cplusplus
@@ -21,6 +22,10 @@ void sidetone_set_volume(uint8_t volume);
 
 // Next mono sample, called from the I2S fill interrupt.
 int32_t sidetone_next_sample(void);
+
+// True while a tone is keyed or still fading out. Call from the I2S fill
+// interrupt, after sidetone_next_sample().
+bool sidetone_sounding(void);
 
 #ifdef __cplusplus
 }
