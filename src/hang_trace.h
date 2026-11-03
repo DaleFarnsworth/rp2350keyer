@@ -32,6 +32,12 @@ enum {
 
 // scratch[0]: stage, scratch[1]: main loop count, scratch[2]: DMA
 // interrupts. scratch[4..7] belong to the bootrom.
+//
+// A CPU fault ends in hang_trace's HardFault handler, which sets
+// HANG_FAULT in scratch[0] and replaces the counts with the faulting PC
+// (scratch[1]), its LR (scratch[2]) and the fault status, CFSR
+// (scratch[3]), then waits for the watchdog.
+#define HANG_FAULT 0x80000000u
 static inline void hang_stage(uint32_t s) { watchdog_hw->scratch[0] = s; }
 static inline void hang_loop(void) { watchdog_hw->scratch[1]++; }
 static inline void hang_dma_irq(void) { watchdog_hw->scratch[2]++; }
