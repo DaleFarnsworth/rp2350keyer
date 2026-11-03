@@ -43,9 +43,16 @@ target_link_libraries(rp2350_zero_vail_audio PRIVATE
     tinyusb_device
 )
 
-# USB is owned by our TinyUSB composite device; debug output goes to UART0.
+# USB is owned by our TinyUSB composite device; debug output goes to UART0,
+# moved from the board's default GP0/GP1, which are the key inputs, to
+# GP12 (TX) and GP13 (RX).
 pico_enable_stdio_usb(rp2350_zero_vail_audio 0)
 pico_enable_stdio_uart(rp2350_zero_vail_audio 1)
+target_compile_definitions(rp2350_zero_vail_audio PRIVATE
+    PICO_DEFAULT_UART=0
+    PICO_DEFAULT_UART_TX_PIN=12
+    PICO_DEFAULT_UART_RX_PIN=13
+)
 
 pico_set_program_name(rp2350_zero_vail_audio "RP2350-Zero Vail Audio")
 pico_add_extra_outputs(rp2350_zero_vail_audio)

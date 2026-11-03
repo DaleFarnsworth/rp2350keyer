@@ -28,9 +28,11 @@
 #define DAC_SPK_ANALOG_ATTEN  12
 
 // ---- Morse key inputs (active low, internal pull-ups) ---------------------
-#define DIT_PIN             2
-#define DAH_PIN             3
-#define KEY_PIN             6   // straight key
+// The same pins as the Vail adapter's RP2350-Zero build, so the firmware
+// fits the keyer case's wiring
+#define DIT_PIN             2   // paddle tip
+#define DAH_PIN             1   // paddle ring
+#define KEY_PIN             0   // straight key
 #define DEBOUNCE_MS         10  // same as the Vail adapter's Bounce default
 
 // ---- Status LED ------------------------------------------------------------

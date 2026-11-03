@@ -30,8 +30,8 @@ Pad numbers are from the RP2350-Zero's pinout.
 | RP2350-Zero | Pad | Key |
 |---|---|---|
 | GP2 | 21 | dit paddle (tip) |
-| GP3 | 20 | dah paddle (ring) |
-| GP6 | 17 | straight key |
+| GP1 | 22 | dah paddle (ring) |
+| GP0 | 23 | straight key |
 | GND | 2 | common (sleeve) |
 
 The Zero has only one GND pad, so join the DAC's and the keys' grounds
@@ -40,7 +40,11 @@ breakout's jack. The class-D speaker output is off; set
 `DAC_ENABLE_SPEAKER` to 1 in `src/config.h` to turn it on.
 All pins and levels are in [src/config.h](src/config.h).
 
-UART0 (GP0 TX, pad 23, 115200 baud) carries debug messages.
+These are the Vail adapter's RP2350-Zero pins, the same as the wiring in
+the keyer case's `rp2350-zero` branch.
+
+UART0 (GP12 TX, pad 11, 115200 baud) carries debug messages. It's moved
+from the board's usual GP0 and GP1, which are key inputs here.
 
 The Zero's RGB LED (a WS2812 on GP16) is the status light: it blinks green
 until the computer has set up the USB device, then stays dim green, going
