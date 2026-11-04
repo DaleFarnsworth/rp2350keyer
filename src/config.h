@@ -57,6 +57,10 @@
 // elements; 0 brings it back as soon as each tone has faded out.
 #define RX_MUTE_DURING_SIDETONE 1
 #define RX_MUTE_HANG_MS         0
+// Scale the sidetone by the computer's volume for this device, as the
+// computer's audio is, so the two keep the same balance. The computer's
+// mute doesn't silence the sidetone.
+#define SIDETONE_FOLLOWS_HOST_VOLUME 1
 
 // ---- Vail adapter defaults (from vail-adapter config.h) -------------------
 #define DEFAULT_TONE_NOTE                69   // A4, 440 Hz

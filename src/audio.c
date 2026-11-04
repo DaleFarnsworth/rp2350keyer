@@ -48,6 +48,8 @@ static bool priming;
 static int8_t mute[N_CHANNELS + 1];     // [0] is the master channel
 static int16_t volume[N_CHANNELS + 1];
 static volatile int32_t gain_q15[N_CHANNELS] = { 32768, 32768 };
+// The host's volume without its mute, for the sidetone
+static volatile int32_t sidetone_gain_q15[N_CHANNELS] = { 32768, 32768 };
 
 // Gain on the computer's audio while the sidetone sounds, in Q15, ramped
 // so muting and unmuting don't click. Interrupt-only state.
@@ -69,6 +71,12 @@ static void fill_i2s(uint32_t *buf, uint32_t frames) {
   uint32_t head = ring_head;
   int32_t gl = gain_q15[0];
   int32_t gr = gain_q15[1];
+#if SIDETONE_FOLLOWS_HOST_VOLUME
+  int32_t sgl = sidetone_gain_q15[0];
+  int32_t sgr = sidetone_gain_q15[1];
+#else
+  int32_t sgl = 32768, sgr = 32768;
+#endif
 
   for (uint32_t i = 0; i < frames; i++) {
     uint32_t f = 0;
@@ -96,7 +104,9 @@ static void fill_i2s(uint32_t *buf, uint32_t frames) {
     int32_t l = ((int32_t) (int16_t) (f & 0xffff) * gl) >> 15;
     int32_t r = ((int32_t) (int16_t) (f >> 16) * gr) >> 15;
 #endif
-    buf[i] = ((uint32_t) (uint16_t) clip16(r + st) << 16) | (uint16_t) clip16(l + st);
+    int32_t st_l = (st * sgl) >> 15;
+    int32_t st_r = (st * sgr) >> 15;
+    buf[i] = ((uint32_t) (uint16_t) clip16(r + st_r) << 16) | (uint16_t) clip16(l + st_l);
   }
   ring_tail = tail;
 }
@@ -157,12 +167,10 @@ void audio_task(void) {
 
 static void update_gains(void) {
   for (int ch = 0; ch < N_CHANNELS; ch++) {
-    if (mute[0] || mute[ch + 1]) {
-      gain_q15[ch] = 0;
-    } else {
-      float db = (float) (volume[0] + volume[ch + 1]) / 256.0f;
-      gain_q15[ch] = (int32_t) lrintf(32768.0f * powf(10.0f, db / 20.0f));
-    }
+    float db = (float) (volume[0] + volume[ch + 1]) / 256.0f;
+    int32_t g = (int32_t) lrintf(32768.0f * powf(10.0f, db / 20.0f));
+    sidetone_gain_q15[ch] = g;
+    gain_q15[ch] = (mute[0] || mute[ch + 1]) ? 0 : g;
   }
 }
 
