@@ -126,6 +126,7 @@ int main() {
         usb_debug_task();
         hang_stage(STAGE_AUDIO_TASK);
         audio_task();
+        audio_dac_task(now);
         hang_stage(STAGE_MIDI_TASK);
         midi_task();
 

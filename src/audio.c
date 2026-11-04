@@ -139,10 +139,25 @@ void audio_release_output(void) {
   out_fade = false;
 }
 
+static bool dac_ready;
+static uint32_t dac_tries;
+
 void audio_init(void) {
   sidetone_init();
   i2s_out_init(I2S_DATA_PIN, I2S_BCLK_PIN, AUDIO_SAMPLE_RATE, fill_i2s);
-  dac3100_init();
+  dac_tries = 1;
+  dac_ready = dac3100_init();
+}
+
+void audio_dac_task(uint32_t now) {
+  static uint32_t last_try;
+  if (dac_ready || now - last_try < 1000) return;
+  last_try = now;
+  dac_tries++;
+  dac_ready = dac3100_init();
+  if (dac_ready) {
+    printf("dac3100: set up after %lu tries\n", (unsigned long) dac_tries);
+  }
 }
 
 bool audio_streaming(void) {

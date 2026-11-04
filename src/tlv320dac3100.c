@@ -40,11 +40,17 @@
 
 #define PAGE_SELECT        0x00
 
+// A write takes about 50 us at 400 kHz. Without a timeout, a DAC that
+// holds SCL low would stop the firmware for good.
+#define WRITE_TIMEOUT_US 5000
+
 static bool write_reg(uint8_t reg, uint8_t val) {
   uint8_t buf[2] = { reg, val };
-  int n = i2c_write_blocking(DAC_I2C_INST, DAC_I2C_ADDR, buf, 2, false);
+  int n = i2c_write_timeout_us(DAC_I2C_INST, DAC_I2C_ADDR, buf, 2, false,
+                               WRITE_TIMEOUT_US);
   if (n != 2) {
-    printf("dac3100: write reg 0x%02x failed\n", reg);
+    printf("dac3100: write reg 0x%02x failed (%s)\n", reg,
+           n == PICO_ERROR_TIMEOUT ? "timed out" : "no acknowledge");
     return false;
   }
   return true;
@@ -69,8 +75,15 @@ bool dac3100_init(void) {
   gpio_put(DAC_RESET_PIN, 1);
   sleep_ms(2);
 
+  // Stop at the first failure, rather than wait out a timeout for each
+  // register
+  if (!select_page(0)) {
+    // Both lines low usually means the DAC has no power
+    printf("dac3100: no response, SDA %d, SCL %d\n",
+           gpio_get(DAC_I2C_SDA_PIN), gpio_get(DAC_I2C_SCL_PIN));
+    return false;
+  }
   bool ok = true;
-  ok &= select_page(0);
   ok &= write_reg(P0_SW_RESET, 0x01);
   sleep_ms(2);
 
