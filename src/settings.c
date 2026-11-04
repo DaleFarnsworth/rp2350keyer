@@ -3,6 +3,7 @@
 #include <stdio.h>
 #include <string.h>
 
+#include "audio.h"
 #include "config.h"
 #include "hardware/flash.h"
 #include "pico/flash.h"
@@ -21,6 +22,7 @@ typedef struct {
 static vail_settings_t pending;
 static bool save_pending;
 static uint32_t last_change_ms;
+static bool holding;            // the audio output is held for the write
 
 // Field by field, so struct padding never matters
 static uint32_t checksum(const vail_settings_t *s) {
@@ -72,16 +74,28 @@ static void do_write(void *param) {
 void settings_task(uint32_t now_ms) {
   if (!save_pending) return;
   if (last_change_ms == 0) {
+    // Another change came in while the audio was being held: wait again
+    if (holding) {
+      audio_release_output();
+      holding = false;
+    }
     last_change_ms = now_ms ? now_ms : 1;
     return;
   }
   if (now_ms - last_change_ms < SETTINGS_SAVE_DELAY_MS) return;
-  save_pending = false;
 
   vail_settings_t current;
-  if (settings_load(&current) && same(&current, &pending)) {
+  if (!holding && settings_load(&current) && same(&current, &pending)) {
+    save_pending = false;
     return;   // nothing changed, spare the flash
   }
+
+  // The erase holds off interrupts for about 50 ms, so fade the audio out
+  // and hold the DAC on silence first, rather than let the DMA run on
+  // without the interrupt that refills it.
+  holding = true;
+  if (!audio_hold_output()) return;
+  save_pending = false;
 
   static uint8_t page[FLASH_PAGE_SIZE] __attribute__((aligned(4)));
   memset(page, 0xff, sizeof(page));
@@ -93,8 +107,9 @@ void settings_task(uint32_t now_ms) {
   st.check = checksum(&st.s);
   memcpy(page, &st, sizeof(st));
 
-  // Interrupts are held off for the erase (~50 ms), so audio glitches once.
   int rc = flash_safe_execute(do_write, page, 500);
+  audio_release_output();
+  holding = false;
   printf("settings: saved keyer=%u dit=%u note=%u freq=%u volume=%u (rc=%d)\n",
          pending.keyer_type, pending.dit_duration_ms, pending.tx_note, pending.tx_freq_hz,
          pending.sidetone_volume, rc);

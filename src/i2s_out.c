@@ -14,18 +14,45 @@ static uint32_t buffers[2][I2S_BUF_FRAMES];
 static int dma_chan[2];
 static i2s_fill_fn fill_cb;
 
+// While held, each channel sends this one word over and over instead of
+// its buffer, so the output stays silent without the interrupt.
+static uint32_t silence;
+static dma_channel_config play_config[2];
+static dma_channel_config hold_config[2];
+static volatile bool hold;
+static volatile bool held[2];
+
 static void __isr dma_handler(void) {
   hang_dma_irq();
   for (int i = 0; i < 2; i++) {
     int ch = dma_chan[i];
     if (dma_irqn_get_channel_status(0, ch)) {
       dma_irqn_acknowledge_channel(0, ch);
-      // The other channel is already playing (chained). Rearm this one
-      // without triggering, then refill its buffer.
+      // The other channel is already playing (chained), so this one is
+      // idle and can be changed.
+      if (hold) {
+        dma_channel_set_config(ch, &hold_config[i], false);
+        dma_channel_set_read_addr(ch, &silence, false);
+        held[i] = true;
+        continue;
+      }
+      if (held[i]) {
+        dma_channel_set_config(ch, &play_config[i], false);
+        held[i] = false;
+      }
+      // Rearm it without triggering, then refill its buffer.
       dma_channel_set_read_addr(ch, buffers[i], false);
       fill_cb(buffers[i], I2S_BUF_FRAMES);
     }
   }
+}
+
+void i2s_out_hold(bool on) {
+  hold = on;
+}
+
+bool i2s_out_held(void) {
+  return hold && held[0] && held[1];
 }
 
 void i2s_out_init(uint data_pin, uint clock_pin_base, uint32_t sample_rate, i2s_fill_fn fill) {
@@ -55,7 +82,10 @@ void i2s_out_init(uint data_pin, uint clock_pin_base, uint32_t sample_rate, i2s_
     channel_config_set_write_increment(&c, false);
     channel_config_set_dreq(&c, pio_get_dreq(pio, sm, true));
     channel_config_set_chain_to(&c, dma_chan[i ^ 1]);
-    dma_channel_configure(dma_chan[i], &c, &pio->txf[sm], buffers[i], I2S_BUF_FRAMES, false);
+    play_config[i] = c;
+    channel_config_set_read_increment(&c, false);
+    hold_config[i] = c;
+    dma_channel_configure(dma_chan[i], &play_config[i], &pio->txf[sm], buffers[i], I2S_BUF_FRAMES, false);
     dma_irqn_set_channel_enabled(0, dma_chan[i], true);
   }
 

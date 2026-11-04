@@ -15,6 +15,12 @@ void audio_task(void);
 
 bool audio_streaming(void);
 
+// For a flash write, which holds off interrupts: fade the output out and
+// hold it on silence. Call until it returns true, then write, then call
+// audio_release_output(). It doesn't start while the sidetone sounds.
+bool audio_hold_output(void);
+void audio_release_output(void);
+
 #ifdef __cplusplus
 }
 #endif

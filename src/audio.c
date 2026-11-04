@@ -59,6 +59,11 @@ static volatile int32_t sidetone_gain_q15[N_CHANNELS] = { 32768, 32768 };
 static int32_t rx_gain = 32768;
 static uint32_t rx_mute_hang;
 
+// Gain on the whole output, in Q15, faded to silence for a flash write
+#define OUT_FADE_STEP (32768 / (AUDIO_SAMPLE_RATE / 1000 * SIDETONE_RAMP_MS))
+static volatile bool out_fade;
+static volatile int32_t out_gain = 32768;
+
 static inline int16_t clip16(int32_t v) {
   if (v > 32767) return 32767;
   if (v < -32768) return -32768;
@@ -71,6 +76,7 @@ static void fill_i2s(uint32_t *buf, uint32_t frames) {
   uint32_t head = ring_head;
   int32_t gl = gain_q15[0];
   int32_t gr = gain_q15[1];
+  int32_t og = out_gain;
 #if SIDETONE_FOLLOWS_HOST_VOLUME
   int32_t sgl = sidetone_gain_q15[0];
   int32_t sgr = sidetone_gain_q15[1];
@@ -106,9 +112,31 @@ static void fill_i2s(uint32_t *buf, uint32_t frames) {
 #endif
     int32_t st_l = (st * sgl) >> 15;
     int32_t st_r = (st * sgr) >> 15;
-    buf[i] = ((uint32_t) (uint16_t) clip16(r + st_r) << 16) | (uint16_t) clip16(l + st_l);
+    if (out_fade) {
+      og = (og > OUT_FADE_STEP) ? og - OUT_FADE_STEP : 0;
+    } else {
+      og = (og < 32768 - OUT_FADE_STEP) ? og + OUT_FADE_STEP : 32768;
+    }
+    int32_t out_l = (clip16(l + st_l) * og) >> 15;
+    int32_t out_r = (clip16(r + st_r) * og) >> 15;
+    buf[i] = ((uint32_t) (uint16_t) out_r << 16) | (uint16_t) out_l;
   }
   ring_tail = tail;
+  out_gain = og;
+}
+
+bool audio_hold_output(void) {
+  if (!out_fade) {
+    if (sidetone_sounding()) return false;
+    out_fade = true;
+  }
+  if (out_gain == 0) i2s_out_hold(true);
+  return i2s_out_held();
+}
+
+void audio_release_output(void) {
+  i2s_out_hold(false);
+  out_fade = false;
 }
 
 void audio_init(void) {
