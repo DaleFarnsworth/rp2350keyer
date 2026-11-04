@@ -42,15 +42,18 @@ target_link_libraries(rp2350_zero_vail_audio PRIVATE
     hardware_i2c
     hardware_clocks
     hardware_flash
+    hardware_uart
     tinyusb_device
 )
 
 # USB is owned by our TinyUSB composite device, which has its own serial
 # port for debug output (src/usb_debug.c). Debug output also goes to UART0,
 # moved from the board's default GP0/GP1, which are the key inputs, to
-# GP12 (TX) and GP13 (RX).
+# GP12 (TX) and GP13 (RX). src/usb_debug.c drives the UART itself, without
+# blocking, rather than through the SDK's stdio_uart, which waits for each
+# character and so stalled the audio.
 pico_enable_stdio_usb(rp2350_zero_vail_audio 0)
-pico_enable_stdio_uart(rp2350_zero_vail_audio 1)
+pico_enable_stdio_uart(rp2350_zero_vail_audio 0)
 target_compile_definitions(rp2350_zero_vail_audio PRIVATE
     PICO_DEFAULT_UART=0
     PICO_DEFAULT_UART_TX_PIN=12

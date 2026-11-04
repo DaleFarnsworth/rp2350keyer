@@ -1,6 +1,8 @@
 #include "usb_debug.h"
 
+#include "hardware/gpio.h"
 #include "hardware/sync.h"
+#include "hardware/uart.h"
 #include "pico/bootrom.h"
 #include "pico/stdio.h"
 #include "pico/stdio/driver.h"
@@ -11,13 +13,17 @@
 
 static char log_buf[LOG_SIZE];
 static volatile uint32_t log_head = 0;    // next byte to write
-static uint32_t log_tail = 0;             // next byte to send
+static uint32_t cdc_tail = 0;             // next byte to send to the port
+static uint32_t uart_tail = 0;            // and to the UART
+
+#define DEBUG_UART UART_INSTANCE(PICO_DEFAULT_UART)
 
 static volatile bool reboot_requested = false;
 static absolute_time_t reboot_at;
 
-// Never blocks and never touches USB, so it's safe anywhere, including in
-// TinyUSB callbacks. When the buffer is full the oldest output is dropped.
+// Never blocks and never touches USB or the UART, so it's safe anywhere,
+// including in TinyUSB callbacks. When the buffer is full the oldest
+// output is dropped.
 static void usb_debug_out_chars(const char *buf, int len) {
   uint32_t irq = save_and_disable_interrupts();
   uint32_t head = log_head;
@@ -26,8 +32,11 @@ static void usb_debug_out_chars(const char *buf, int len) {
     head++;
   }
   log_head = head;
-  if (head - log_tail > LOG_SIZE) {
-    log_tail = head - LOG_SIZE;
+  if (head - cdc_tail > LOG_SIZE) {
+    cdc_tail = head - LOG_SIZE;
+  }
+  if (head - uart_tail > LOG_SIZE) {
+    uart_tail = head - LOG_SIZE;
   }
   restore_interrupts(irq);
 }
@@ -38,7 +47,23 @@ static stdio_driver_t usb_debug_driver = {
 };
 
 void usb_debug_init(void) {
+  uart_init(DEBUG_UART, PICO_DEFAULT_UART_BAUD_RATE);
+  gpio_set_function(PICO_DEFAULT_UART_TX_PIN, UART_FUNCSEL_NUM(DEBUG_UART, PICO_DEFAULT_UART_TX_PIN));
   stdio_set_driver_enabled(&usb_debug_driver, true);
+}
+
+// Only as much as the UART's FIFO has room for, so it never waits on the
+// UART's 115200 baud.
+static void uart_drain(uint32_t head) {
+  uint32_t tail = uart_tail;
+  while (tail != head && uart_is_writable(DEBUG_UART)) {
+    uart_get_hw(DEBUG_UART)->dr = (uint8_t) log_buf[tail & (LOG_SIZE - 1)];
+    tail++;
+  }
+  uint32_t irq = save_and_disable_interrupts();
+  // Output may have been dropped meanwhile; never move the tail backwards
+  if ((int32_t) (tail - uart_tail) > 0) uart_tail = tail;
+  restore_interrupts(irq);
 }
 
 void usb_debug_task(void) {
@@ -46,12 +71,14 @@ void usb_debug_task(void) {
     reset_usb_boot(0, 0);
   }
 
-  if (!tud_cdc_connected()) return;
-
   uint32_t irq = save_and_disable_interrupts();
   uint32_t head = log_head;
-  uint32_t tail = log_tail;
+  uint32_t tail = cdc_tail;
   restore_interrupts(irq);
+
+  uart_drain(head);
+
+  if (!tud_cdc_connected()) return;
 
   bool sent = false;
   while (tail != head) {
@@ -70,7 +97,7 @@ void usb_debug_task(void) {
 
   irq = save_and_disable_interrupts();
   // Output may have been dropped meanwhile; never move the tail backwards
-  if ((int32_t) (tail - log_tail) > 0) log_tail = tail;
+  if ((int32_t) (tail - cdc_tail) > 0) cdc_tail = tail;
   restore_interrupts(irq);
 
   if (sent) tud_cdc_write_flush();
