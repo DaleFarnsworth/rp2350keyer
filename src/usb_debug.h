@@ -1,11 +1,12 @@
 #ifndef _USB_DEBUG_H_
 #define _USB_DEBUG_H_
 
-// Debug output over a USB serial (CDC) port, alongside the UART.
+// Debug output over a USB serial (CDC) port and the UART.
 //
 // Everything printed goes into a ring buffer, which is sent to the port
 // whenever a terminal has it open, so the messages from boot are still
-// there when one opens it later. Opening the port at 1200 baud restarts the
+// there when one opens it later. It goes to the UART as fast as the UART
+// takes it, so printing never waits on either. Opening the port at 1200 baud restarts the
 // RP2350 in its USB bootloader, as the Arduino IDE expects.
 
 #ifdef __cplusplus
