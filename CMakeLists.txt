@@ -52,5 +52,13 @@ target_link_libraries(pico2_vail_audio PRIVATE
 pico_enable_stdio_usb(pico2_vail_audio 0)
 pico_enable_stdio_uart(pico2_vail_audio 0)
 
+# Wait 64 ms rather than the SDK's 6 ms for the crystal to start, as
+# Arduino-Pico does for every board. With the shorter wait the RP2350-Zero's
+# crystal sometimes wasn't running yet at power-on, and the clock setup
+# hung before USB or the LED started.
+target_compile_definitions(pico2_vail_audio PRIVATE
+    PICO_XOSC_STARTUP_DELAY_MULTIPLIER=64
+)
+
 pico_set_program_name(pico2_vail_audio "Pico 2 Vail Audio")
 pico_add_extra_outputs(pico2_vail_audio)
