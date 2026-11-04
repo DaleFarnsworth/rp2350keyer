@@ -146,7 +146,7 @@ void audio_init(void) {
   sidetone_init();
   i2s_out_init(I2S_DATA_PIN, I2S_BCLK_PIN, AUDIO_SAMPLE_RATE, fill_i2s);
   dac_tries = 1;
-  dac_ready = dac3100_init();
+  dac_ready = dac3100_init(true);
 }
 
 void audio_dac_task(uint32_t now) {
@@ -154,7 +154,13 @@ void audio_dac_task(uint32_t now) {
   if (dac_ready || now - last_try < 1000) return;
   last_try = now;
   dac_tries++;
-  dac_ready = dac3100_init();
+  // Log the first try, then once a minute
+  bool report = dac_tries % 60 == 0;
+  if (report) {
+    printf("dac3100: still no response after %lu tries\n",
+           (unsigned long) dac_tries);
+  }
+  dac_ready = dac3100_init(report);
   if (dac_ready) {
     printf("dac3100: set up after %lu tries\n", (unsigned long) dac_tries);
   }

@@ -9,7 +9,8 @@ extern "C" {
 
 // Starts I2S, then configures the TLV320DAC3100.
 void audio_init(void);
-// Retries the DAC's setup once a second until it responds
+// Retries the DAC's setup once a second until it responds, logging
+// once a minute
 void audio_dac_task(uint32_t now);
 
 // Moves received USB audio towards the I2S output. Call from the main loop.

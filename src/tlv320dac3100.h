@@ -8,8 +8,9 @@ extern "C" {
 #endif
 
 // Configure the TLV320DAC3100 for 48 kHz, 16-bit I2S slave operation with
-// the PLL clocked from BCLK. I2S must already be running.
-bool dac3100_init(void);
+// the PLL clocked from BCLK. I2S must already be running. With report
+// false, a DAC that doesn't respond isn't logged.
+bool dac3100_init(bool report);
 
 // DAC digital volume, both channels, in 0.5 dB steps (-127 = -63.5 dB,
 // 48 = +24 dB).
