@@ -45,6 +45,10 @@
 #define DEFAULT_SIDETONE_VOLUME  103    // -12 dBFS
 // Rise/fall time of the sidetone envelope, to avoid key clicks.
 #define SIDETONE_RAMP_MS    5
+// Scale the sidetone by the computer's volume for this device, as the
+// computer's audio is, so the two keep the same balance. The computer's
+// mute doesn't silence the sidetone.
+#define SIDETONE_FOLLOWS_HOST_VOLUME 1
 
 // ---- Vail adapter defaults (from vail-adapter config.h) -------------------
 #define DEFAULT_TONE_NOTE                69   // A4, 440 Hz

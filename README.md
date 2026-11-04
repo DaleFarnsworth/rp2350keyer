@@ -116,9 +116,12 @@ As in the Vail adapter's PolyBuzzer, there are two priority slots. Local
 keying (slot 0) overrides MIDI notes from the host (slot 1). The tone is a
 sine with a 5 ms rise and fall (`SIDETONE_RAMP_MS`) to avoid key clicks.
 Its level is set with CC4 and defaults to -12 dBFS
-(`DEFAULT_SIDETONE_VOLUME`). It is added to the USB audio after the host
-volume is applied, so the computer's volume control does not change the
-sidetone level.
+(`DEFAULT_SIDETONE_VOLUME`). The computer's volume control for this
+device scales it as well as the USB audio, so the two keep the same
+balance: the sidetone stays as loud as a sidetone heard in the received
+audio, at any volume setting. The computer's mute silences only the USB
+audio. `SIDETONE_FOLLOWS_HOST_VOLUME` set to 0 makes the sidetone level
+independent of the computer's volume.
 
 ## How it differs from the Vail adapter
 
