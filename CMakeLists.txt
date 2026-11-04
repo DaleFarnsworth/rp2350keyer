@@ -54,6 +54,14 @@ target_link_libraries(rp2350_zero_vail_audio PRIVATE
 # character and so stalled the audio.
 pico_enable_stdio_usb(rp2350_zero_vail_audio 0)
 pico_enable_stdio_uart(rp2350_zero_vail_audio 0)
+# Wait 64 ms rather than the SDK's 6 ms for the crystal to start, as
+# Arduino-Pico does for every board. With the shorter wait the Zero's
+# crystal sometimes wasn't running yet at power-on, and the clock setup
+# hung before USB or the LED started.
+target_compile_definitions(rp2350_zero_vail_audio PRIVATE
+    PICO_XOSC_STARTUP_DELAY_MULTIPLIER=64
+)
+
 target_compile_definitions(rp2350_zero_vail_audio PRIVATE
     PICO_DEFAULT_UART=0
     PICO_DEFAULT_UART_TX_PIN=12
