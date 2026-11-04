@@ -119,7 +119,7 @@ uint8_t const *tud_descriptor_bos_cb(void) {
 static char const *string_desc_arr[] = {
   [STRID_LANGID]       = (const char[]) { 0x09, 0x04 },  // English
   [STRID_MANUFACTURER] = "Open Source Hardware",
-  [STRID_PRODUCT]      = "RP2350-Zero Vail Audio",
+  [STRID_PRODUCT]      = "RP2350 Vail Audio",
   [STRID_SERIAL]       = NULL,                            // from flash unique ID
   [STRID_AUDIO]        = "Vail Audio",
   [STRID_MIDI]         = "Vail Adapter",
