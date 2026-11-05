@@ -74,7 +74,7 @@ void VailAdapter::settingsChanged(uint8_t keyerType) {
     settings_save_later(&s);
 }
 
-// Local keying sidetone: the CC3 frequency if set, otherwise the CC2 note
+// Local keying sidetone: the CC9 frequency if set, otherwise the CC2 note
 void VailAdapter::startTxTone() {
     if (this->txFreqHz) {
         sidetone_tone(SLOT_TX, this->txFreqHz);
@@ -160,19 +160,8 @@ void VailAdapter::HandleMIDI(const MidiPacket &event) {
         }
         case 2:
             this->txNote = event.byte3;
-            this->txFreqHz = 0;  // the most recent of CC2 and CC3 wins
+            this->txFreqHz = 0;  // the most recent of CC2 and CC9 wins
             printf("TX note set to: %u\n", this->txNote);
-            this->settingsChanged(getCurrentKeyerType());
-            break;
-        case 3:
-            // Not in the Vail adapter: sidetone pitch in 10 Hz steps.
-            // 0 goes back to the CC2 note.
-            this->txFreqHz = event.byte3 * 10;
-            if (this->txFreqHz) {
-                printf("TX frequency set to: %u Hz\n", this->txFreqHz);
-            } else {
-                printf("TX frequency cleared, using note %u\n", this->txNote);
-            }
             this->settingsChanged(getCurrentKeyerType());
             break;
         case 8:
@@ -185,6 +174,17 @@ void VailAdapter::HandleMIDI(const MidiPacket &event) {
                        ((int) event.byte3 - 127) / 2.0);
             } else {
                 printf("Sidetone volume set to: 0 (off)\n");
+            }
+            this->settingsChanged(getCurrentKeyerType());
+            break;
+        case 9:
+            // Not in the Vail adapter: sidetone pitch in 10 Hz steps.
+            // 0 goes back to the CC2 note.
+            this->txFreqHz = event.byte3 * 10;
+            if (this->txFreqHz) {
+                printf("TX frequency set to: %u Hz\n", this->txFreqHz);
+            } else {
+                printf("TX frequency cleared, using note %u\n", this->txNote);
             }
             this->settingsChanged(getCurrentKeyerType());
             break;
