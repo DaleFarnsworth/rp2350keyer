@@ -78,7 +78,7 @@ the drive appears.
 ## MIDI protocol
 
 The device uses the Vail adapter's MIDI protocol on channel 1, plus two
-extra controllers (CC3 and CC4) for the sidetone. Values are hex; `vv`, `nn`
+extra controllers (CC3 and CC8) for the sidetone. Values are hex; `vv`, `nn`
 and `kk` are 00–7F.
 
 | Message | Meaning | Default | Saved | Source |
@@ -87,7 +87,7 @@ and `kk` are 00–7F.
 | `B0 01 vv` | Dit duration = `vv` × 2 ms (`00` gives 2 ms) | `32` (100 ms) | yes | Vail |
 | `B0 02 nn` | Sidetone note number (`45` = A4 = 440 Hz). Clears a CC3 pitch. | `45` | yes | Vail |
 | `B0 03 vv` | Sidetone pitch = `vv` × 10 Hz (10–1270 Hz). `00` goes back to the CC2 note. | `00` (use CC2) | yes | added |
-| `B0 04 vv` | Sidetone volume: `7F` is 0 dBFS, each step below is −0.5 dB, `00` is off. Applies to keyed and MIDI-note sidetone. | `67` (−12 dBFS) | yes | added |
+| `B0 08 vv` | Sidetone volume: `7F` is 0 dBFS, each step below is −0.5 dB, `00` is off. Applies to keyed and MIDI-note sidetone. | `67` (−12 dBFS) | yes | added |
 | `C0 kk` | Keyer (see below) | `01` | yes | Vail |
 | `90 nn vv` | Play note `nn` on the sidetone. Velocity `00` is note off. | | | Vail |
 | `80 nn vv` | Stop the MIDI sidetone note | | | Vail |
@@ -126,7 +126,7 @@ In passthrough mode the dit and dah paddles are sent directly as notes 1 and
 As in the Vail adapter's PolyBuzzer, there are two priority slots. Local
 keying (slot 0) overrides MIDI notes from the host (slot 1). The tone is a
 sine with a 5 ms rise and fall (`SIDETONE_RAMP_MS`) to avoid key clicks.
-Its level is set with CC4 and defaults to -12 dBFS
+Its level is set with CC8 and defaults to -12 dBFS
 (`DEFAULT_SIDETONE_VOLUME`). The computer's volume control for this
 device scales it as well as the USB audio, so the two keep the same
 balance: the sidetone stays as loud as a sidetone heard in the received
@@ -151,7 +151,7 @@ stop it returning in the gaps between elements, and
   keyer 1, so a CC1/CC2 change in passthrough could save it as straight key.
 - `B0 01 00` gives a 2 ms dit instead of 0 ms.
 - `B0 03 vv` is an extra command for setting the sidetone pitch in Hz.
-- `B0 04 vv` is an extra command for setting the sidetone volume.
+- `B0 08 vv` is an extra command for setting the sidetone volume.
 - Settings are saved in the last 4 KB flash sector, 2 s after the last
   change. The erase holds off interrupts for about 50 ms, so audio glitches
   once each time a setting is saved.

@@ -46,7 +46,7 @@
 // 153.6 MHz / (2 * 32 * 48 kHz) = 50.
 #define SYS_CLOCK_KHZ       153600
 
-// Default sidetone volume, in CC4 units: 127 is 0 dBFS, each step below
+// Default sidetone volume, in CC8 units: 127 is 0 dBFS, each step below
 // is -0.5 dB, 0 is off.
 #define DEFAULT_SIDETONE_VOLUME  103    // -12 dBFS
 // Rise/fall time of the sidetone envelope, to avoid key clicks.

@@ -175,7 +175,7 @@ void VailAdapter::HandleMIDI(const MidiPacket &event) {
             }
             this->settingsChanged(getCurrentKeyerType());
             break;
-        case 4:
+        case 8:
             // Not in the Vail adapter: sidetone volume. 127 is 0 dBFS,
             // each step below is -0.5 dB, 0 is off.
             this->sidetoneVolume = event.byte3;
